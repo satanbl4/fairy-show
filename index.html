@@ -8,7 +8,7 @@
   body {
     margin: 0;
     overflow: hidden;
-    background: radial-gradient(circle at center, #12003d, #000);
+    background: radial-gradient(circle at center, #1a005a, #000);
     font-family: 'Comic Sans MS', cursive;
   }
   canvas { display: block; }
@@ -26,8 +26,11 @@
 </style>
 </head>
 <body>
-<div id="text">🧚 Нажми на фею, чтобы услышать её голос!</div>
+<div id="text">🧚 Добро пожаловать на волшебное шоу!</div>
 <canvas id="fairyCanvas"></canvas>
+
+<!-- Фоновая музыка -->
+<audio id="music" src="https://cdn.pixabay.com/audio/2023/03/28/audio_4d8f4c6f5c.mp3" loop></audio>
 
 <script>
 const canvas = document.getElementById('fairyCanvas');
@@ -36,26 +39,59 @@ canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
 const fairyImg = new Image();
-fairyImg.src = "https://raw.githubusercontent.com/mdn/content/main/files/en-us/learn/canvas/images/fairy.png";
+fairyImg.src = "https://cdn.pixabay.com/photo/2017/01/31/15/00/fairy-2023733_1280.png";
+
+const music = document.getElementById("music");
 
 let x = canvas.width / 2;
 let y = canvas.height / 2;
 let dx = 1.5;
 let dy = 1.2;
 let angle = 0;
+let sparkles = [];
 
 function drawFairy() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  let size = 180 + Math.sin(angle * 0.1) * 10;
 
-  // свечение
-  const gradient = ctx.createRadialGradient(x, y, 10, x, y, 100);
-  gradient.addColorStop(0, "rgba(255,200,255,0.8)");
+  // Пыльца феи (частицы)
+  for (let i = 0; i < sparkles.length; i++) {
+    const s = sparkles[i];
+    ctx.beginPath();
+    ctx.fillStyle = `rgba(255, ${200 + Math.random()*55}, 255, ${s.alpha})`;
+    ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+    ctx.fill();
+    s.x += s.vx;
+    s.y += s.vy;
+    s.alpha -= 0.01;
+  }
+  sparkles = sparkles.filter(s => s.alpha > 0);
+
+  // Сияние
+  const gradient = ctx.createRadialGradient(x, y, 10, x, y, 140);
+  gradient.addColorStop(0, "rgba(255,180,255,0.8)");
   gradient.addColorStop(1, "rgba(0,0,0,0)");
   ctx.fillStyle = gradient;
-  ctx.fillRect(x - 100, y - 100, 200, 200);
+  ctx.fillRect(x - 150, y - 150, 300, 300);
 
-  ctx.drawImage(fairyImg, x - size / 2, y - size / 2, size, size);
+  // Фея
+  let size = 180 + Math.sin(angle * 0.1) * 8;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(Math.sin(angle * 0.05) * 0.2);
+  ctx.drawImage(fairyImg, -size / 2, -size / 2, size, size);
+  ctx.restore();
+
+  // Добавляем пыльцу
+  if (Math.random() < 0.5) {
+    sparkles.push({
+      x: x,
+      y: y + 60,
+      vx: (Math.random() - 0.5) * 2,
+      vy: Math.random() * 2 + 1,
+      size: Math.random() * 3 + 1,
+      alpha: 1
+    });
+  }
 }
 
 function animate() {
@@ -70,19 +106,30 @@ function animate() {
 
 fairyImg.onload = animate;
 
+// Фея говорит при клике
 canvas.addEventListener("click", e => {
+  if (music.paused) music.play();
   const dist = Math.hypot(e.clientX - x, e.clientY - y);
-  if (dist < 120) {
-    const phrases = [
-      "Привет, волшебник!",
-      "Какое чудесное настроение!",
-      "Ты просто молодец!",
-      "Фея желает тебе удачи!"
-    ];
-    const text = phrases[Math.floor(Math.random() * phrases.length)];
-    speechSynthesis.speak(new SpeechSynthesisUtterance(text));
-  }
+  if (dist < 150) sayRandomPhrase();
 });
+
+// Авто-речь каждые 10 секунд
+setInterval(sayRandomPhrase, 10000);
+
+function sayRandomPhrase() {
+  const phrases = [
+    "Привет, я фея конкурса!",
+    "Ты сегодня сияешь как звезда!",
+    "Пусть удача будет с тобой!",
+    "Верь в чудеса — и они произойдут!",
+    "Ты просто волшебный участник!"
+  ];
+  const msg = new SpeechSynthesisUtterance(
+    phrases[Math.floor(Math.random() * phrases.length)]
+  );
+  msg.lang = "ru-RU";
+  speechSynthesis.speak(msg);
+}
 
 window.addEventListener("resize", () => {
   canvas.width = window.innerWidth;
