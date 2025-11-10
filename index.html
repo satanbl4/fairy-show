@@ -8,7 +8,7 @@
   body {
     margin: 0;
     overflow: hidden;
-    background: radial-gradient(circle at center, #0b0033, #000);
+    background: radial-gradient(circle at center, #12003d, #000);
     font-family: 'Comic Sans MS', cursive;
   }
   canvas { display: block; }
@@ -26,8 +26,7 @@
 </style>
 </head>
 <body>
-<div id="text">✨ Нажми на фею, чтобы услышать её голос ✨</div>
-
+<div id="text">🧚 Нажми на фею, чтобы услышать её голос!</div>
 <canvas id="fairyCanvas"></canvas>
 
 <script>
@@ -36,46 +35,56 @@ const ctx = canvas.getContext('2d');
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-let fairyImg = new Image();
-fairyImg.src = "https://i.imgur.com/8X0gghI.png"; // красивая мультяшная фея PNG с прозрачным фоном
-let x = canvas.width/2, y = canvas.height/2, dx = 2, dy = 1.5;
+const fairyImg = new Image();
+fairyImg.src = "https://raw.githubusercontent.com/mdn/content/main/files/en-us/learn/canvas/images/fairy.png";
+
+let x = canvas.width / 2;
+let y = canvas.height / 2;
+let dx = 1.5;
+let dy = 1.2;
 let angle = 0;
 
-function drawFairy(){
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  let size = 160 + Math.sin(angle*0.1)*10;
-  ctx.shadowColor = 'rgba(255,200,255,0.8)';
-  ctx.shadowBlur = 30;
-  ctx.drawImage(fairyImg, x - size/2, y - size/2, size, size);
-  ctx.shadowBlur = 0;
+function drawFairy() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  let size = 180 + Math.sin(angle * 0.1) * 10;
+
+  // свечение
+  const gradient = ctx.createRadialGradient(x, y, 10, x, y, 100);
+  gradient.addColorStop(0, "rgba(255,200,255,0.8)");
+  gradient.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.fillStyle = gradient;
+  ctx.fillRect(x - 100, y - 100, 200, 200);
+
+  ctx.drawImage(fairyImg, x - size / 2, y - size / 2, size, size);
 }
 
-function animate(){
+function animate() {
   angle += 1;
-  x += dx; y += dy;
-  if(x < 100 || x > canvas.width-100) dx = -dx;
-  if(y < 100 || y > canvas.height-100) dy = -dy;
+  x += dx;
+  y += dy;
+  if (x < 100 || x > canvas.width - 100) dx = -dx;
+  if (y < 100 || y > canvas.height - 100) dy = -dy;
   drawFairy();
   requestAnimationFrame(animate);
 }
+
 fairyImg.onload = animate;
 
-// Клик по фее
-canvas.addEventListener('click', e=>{
+canvas.addEventListener("click", e => {
   const dist = Math.hypot(e.clientX - x, e.clientY - y);
-  if(dist < 100){
+  if (dist < 120) {
     const phrases = [
       "Привет, волшебник!",
       "Какое чудесное настроение!",
       "Ты просто молодец!",
       "Фея желает тебе удачи!"
     ];
-    let text = phrases[Math.floor(Math.random()*phrases.length)];
+    const text = phrases[Math.floor(Math.random() * phrases.length)];
     speechSynthesis.speak(new SpeechSynthesisUtterance(text));
   }
 });
 
-window.addEventListener('resize', ()=>{
+window.addEventListener("resize", () => {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
 });
